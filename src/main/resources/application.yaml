@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: movies
+  datasource:
+    url: jdbc:sqlite:./src/main/resources/movies.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      enabled: true
+ratings:
+  api:
+    endpoint: http://localhost:8081/api/v1/ratings/movies
