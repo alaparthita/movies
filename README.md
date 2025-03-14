@@ -22,3 +22,5 @@ http://localhost:8080/actuator/prometheus
 - Lot of other improvements like Api authorization have to be managed by proxying through Api gateway.
 
 - All the requested apis were tested using Postman. Unit tests are not completely done due to time constraints.
+
+- Docker image can be built using Docker file
