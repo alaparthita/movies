@@ -24,3 +24,5 @@ http://localhost:8080/actuator/prometheus
 - All the requested apis were tested using Postman. Unit tests are not completely done due to time constraints.
 
 - Docker image can be built using Docker file
+
+- api spec is available in the project root api-spec.yaml. This spec can also be downloaded from running app http://localhost:8080/v3/api-docs.yaml

@@ -1,0 +1,243 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+tags:
+- name: Movies
+  description: API for managing movies
+paths:
+  /api/v1/movies/{movieId}:
+    get:
+      tags:
+      - Movies
+      summary: Get movie details
+      description: Retrieve details of a specific movie by its ID
+      operationId: getMovieDetails
+      parameters:
+      - name: movieId
+        in: path
+        description: ID of the movie
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 123
+      responses:
+        "200":
+          description: Successfully retrieved movie details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: Movie not found
+          content:
+            '*/*':
+              schema:
+                type: object
+        "500":
+          description: Internal server error
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/v1/movies/year/{year}:
+    get:
+      tags:
+      - Movies
+      summary: Get movies by year
+      description: Retrieve a paginated list of movies released in a specific year
+      operationId: getMoviesByYear
+      parameters:
+      - name: year
+        in: path
+        description: Year of release
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 2022
+      - name: page
+        in: query
+        description: Page number
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+        example: 1
+      - name: size
+        in: query
+        description: Page size
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+        example: 50
+      responses:
+        "200":
+          description: Successfully retrieved movies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: No movies found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+        "500":
+          description: Internal server error
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+  /api/v1/movies/genre/{genre}:
+    get:
+      tags:
+      - Movies
+      summary: Get movies by genre
+      description: Retrieve a paginated list of movies by genre
+      operationId: getAllMoviesByGenre
+      parameters:
+      - name: genre
+        in: path
+        description: Genre of the movies
+        required: true
+        schema:
+          type: string
+        example: Action
+      - name: page
+        in: query
+        description: Page number
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+        example: 1
+      - name: size
+        in: query
+        description: Page size
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+        example: 50
+      responses:
+        "200":
+          description: Successfully retrieved movies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: No movies found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+        "500":
+          description: Internal server error
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+  /api/v1/movies/:
+    get:
+      tags:
+      - Movies
+      summary: Get all movies
+      description: Retrieve a paginated list of all movies
+      operationId: getAllMovies
+      parameters:
+      - name: page
+        in: query
+        description: Page number
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+        example: 1
+      - name: size
+        in: query
+        description: Page size
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+        example: 50
+      responses:
+        "200":
+          description: Successfully retrieved movies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: No movies found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+        "500":
+          description: Internal server error
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+components:
+  schemas:
+    Movie:
+      type: object
+      properties:
+        movieId:
+          type: integer
+          format: int32
+        imdbId:
+          type: string
+        title:
+          type: string
+        overview:
+          type: string
+        productionCompanies:
+          type: string
+        releaseDate:
+          type: string
+        movieRating:
+          type: number
+          format: double
+        budget:
+          type: string
+        revenue:
+          type: number
+          format: double
+        runtime:
+          type: number
+          format: double
+        language:
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
