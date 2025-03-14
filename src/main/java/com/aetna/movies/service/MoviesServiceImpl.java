@@ -1,7 +1,6 @@
 package com.aetna.movies.service;
 
 import com.aetna.movies.repository.MoviesRepository;
-import com.aetna.movies.exception.ResourceNotFoundException;
 import com.aetna.movies.dto.Movie;
 import com.aetna.movies.dto.Rating;
 import com.aetna.movies.entity.MovieEntity;

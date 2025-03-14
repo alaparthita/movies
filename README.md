@@ -1,4 +1,4 @@
-OpenApi UI endpoints
+OpenApi UI - application api endpoints
 http://localhost:8080/swagger-ui/index.html
 
 Application Health endpoint
@@ -20,4 +20,5 @@ http://localhost:8080/actuator/prometheus
 - Implementation for searching generes can be improved through redesign (ex:- adding virtual columns, indexing json field data  etc...) 
 
 - Lot of other improvements like Api authorization have to be managed by proxying through Api gateway.
-# movies
+
+- All the requested apis were tested using Postman. Unit tests are not completely done due to time constraints.
