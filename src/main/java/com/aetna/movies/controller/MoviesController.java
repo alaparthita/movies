@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aetna.movies.config.ClientRefIdHolder;
 import com.aetna.movies.dto.Movie;
 import com.aetna.movies.exception.ErrorDetails;
 import com.aetna.movies.exception.ResourceNotFoundException;
@@ -129,7 +130,9 @@ public class MoviesController {
             @Parameter(description = "Page number (1-based)", example = "1") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "Number of items per page", example = "50") @RequestParam(defaultValue = "50") int size) {
         validatePaginationParams(page, size);
+        log.debug("Getting all movies with clientRefId: {}", ClientRefIdHolder.getClientRefId());
         List<Movie> movies = moviesService.getAllMovies(page, size);
+        log.debug("Retrieved {} movies with clientRefId: {}", movies.size(), ClientRefIdHolder.getClientRefId());
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found");
         }
@@ -208,7 +211,9 @@ public class MoviesController {
             if (id <= 0) {
                 throw new IllegalArgumentException("ID must be a positive integer");
             }
+            log.debug("Getting movie with ID {} and clientRefId: {}", id, ClientRefIdHolder.getClientRefId());
             Movie movie = moviesService.getMovieDetails(id);
+            log.debug("Retrieved movie {} with clientRefId: {}", movie.getTitle(), ClientRefIdHolder.getClientRefId());
             if (movie == null) {
                 throw new ResourceNotFoundException("Movie not found with id: " + id);
             }
@@ -289,13 +294,16 @@ public class MoviesController {
         @Parameter(description = "Number of items per page", required = false, example = "10")
         @RequestParam(defaultValue = "10") int size
     ) {
+        log.debug("Getting movies for year {} with clientRefId: {}", yearStr, ClientRefIdHolder.getClientRefId());
         try {
             validatePaginationParams(page, size);
             int year = Integer.parseInt(yearStr);
             if (year < 1900 || year > 2100) {
                 throw new IllegalArgumentException("Year must be between 1900 and 2100");
             }
+            log.debug("Getting movies for year {} with clientRefId: {}", year, ClientRefIdHolder.getClientRefId());
             List<Movie> movies = moviesService.getAllMoviesByYear(year, page, size);
+            log.debug("Retrieved {} movies for year {} with clientRefId: {}", movies.size(), year, ClientRefIdHolder.getClientRefId());
             if (movies.isEmpty()) {
                 throw new ResourceNotFoundException("No movies found for year: " + year);
             }
@@ -389,11 +397,13 @@ public class MoviesController {
             @Parameter(description = "Genre to filter by", example = "Action") @PathVariable String genre,
             @Parameter(description = "Page number", example = "1") @RequestParam(value = "page", defaultValue = "1") int page,
             @Parameter(description = "Page size", example = "50") @RequestParam(value = "size", defaultValue = "50") int size) {
+        log.debug("Getting movies for genre {} with clientRefId: {}", genre, ClientRefIdHolder.getClientRefId());
         validatePaginationParams(page, size);
         if (genre == null || genre.trim().isEmpty()) {
             throw new IllegalArgumentException("Genre parameter cannot be null or empty");
         }
         List<Movie> movies = moviesService.getAllMoviesByGenre(genre, page, size);
+        log.debug("Retrieved {} movies for genre {} with clientRefId: {}", movies.size(), genre, ClientRefIdHolder.getClientRefId());
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found for genre: " + genre);
         }

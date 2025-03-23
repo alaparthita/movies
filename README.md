@@ -1,31 +1,134 @@
-Clone the repo and run the following command to start the movies app. DB is included in the repo. This has dependency on ratings app. Make sure to run ratings app first. 
-./gradlew bootRun
+# Movies Service
 
-OpenApi UI - application api endpoints
-http://localhost:8080/swagger-ui/index.html
+A Spring Boot microservice that provides comprehensive movie information and integrates with a ratings service. This service offers RESTful APIs for retrieving movie details, including titles, release dates, genres, and ratings.
 
-Application Health endpoint
-http://localhost:8080/actuator/health
+## Features
 
-Application metrics endpoint (Prometheus)
-http://localhost:8080/actuator/prometheus
+- RESTful APIs for movie information management
+- Integration with Ratings service for movie ratings
+- SQLite database for data persistence
+- OpenAPI/Swagger documentation
+- Actuator endpoints for health monitoring and metrics
+- OpenTelemetry integration for distributed tracing
+- JaCoCo code coverage reporting
+- Checkstyle for code quality
+- Docker support
 
-- Tracing can be enabled levaraging open telemetry agent and environment variables
+## Prerequisites
 
-- Common logging format can be reffered in logback-spring.xml
+- Java 17 or higher
+- Gradle 8.x
+- Ratings service running on port 8081
+- Docker (optional, for containerization)
 
-- Separate applications yaml files for each environment
+## Quick Start
 
-- This service invokes ratings endpoint on port 8081. The url is externalized in application.yaml
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd movies
+   ```
 
-- Created index for genres, releaseDate in movies DB
+2. Add execution permission to Gradle wrapper:
+   ```bash
+   chmod +x gradlew
+   ```
 
-- Implementation for searching generes can be improved through redesign (ex:- adding virtual columns, indexing json field data  etc...) 
+3. Build and run tests:
+   ```bash
+   ./gradlew clean build
+   ```
 
-- Lot of other improvements like Api authorization have to be managed by proxying through Api gateway.
+4. Generate test coverage report:
+   ```bash
+   ./gradlew test jacocoTestReport
+   ```
 
-- All the requested apis were tested using Postman. Unit tests are not completely done due to time constraints.
+5. Start the application:
+   ```bash
+   ./gradlew bootRun
+   ```
 
-- Docker image can be built using Docker file
+The service will start on port 8080.
 
-- api spec is available in the project root api-spec.yaml. This spec can also be downloaded from running app http://localhost:8080/v3/api-docs.yaml
+## API Documentation
+
+The API documentation is available through Swagger UI when the application is running:
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI Spec: http://localhost:8080/v3/api-docs.yaml
+
+### Key Endpoints
+
+- `GET /api/v1/movies/`: Get all movies (paginated)
+- `GET /api/v1/movies/{id}`: Get movie by ID
+- `GET /api/v1/movies/year/{year}`: Get movies by release year
+- `GET /api/v1/movies/genre/{genre}`: Get movies by genre
+
+## Monitoring and Metrics
+
+The application exposes various actuator endpoints for monitoring:
+
+- Health Check: http://localhost:8080/actuator/health
+- Metrics (Prometheus): http://localhost:8080/actuator/prometheus
+
+## Database
+
+The application uses SQLite as its database. The database file is included in the repository at `src/main/resources/movies.db`.
+
+Key features:
+- Indexes on genres and releaseDate columns for optimized queries
+- JPA/Hibernate for data access
+- Automatic schema updates
+
+## Configuration
+
+The application can be configured through `application.yaml`. Key configurations include:
+
+- Database connection settings
+- Ratings service endpoint
+- Actuator endpoint exposure
+- Logging configuration
+
+Environment-specific configurations are available in separate YAML files.
+
+## Distributed Tracing
+
+OpenTelemetry integration is available for distributed tracing. Enable it using the OpenTelemetry Java agent and environment variables.
+
+## Code Quality
+
+- JaCoCo for code coverage reporting
+- Unit tests for core functionality
+
+To run code quality checks:
+```bash
+./gradlew check
+```
+
+## Docker Support
+
+Build the Docker image:
+```bash
+docker build -t movies-service .
+```
+
+Run using Docker Compose:
+```bash
+docker-compose up
+```
+
+## Future Improvements
+
+1. Enhanced genre search through:
+   - Virtual columns
+   - JSON field indexing
+   - Full-text search capabilities
+
+2. API Gateway integration for:
+   - Authentication/Authorization
+   - Rate limiting
+   - Request routing
+
+3. Additional test coverage:
+   - Performance tests
+   - API contract tests
