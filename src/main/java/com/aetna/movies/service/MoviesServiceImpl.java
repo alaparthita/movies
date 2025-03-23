@@ -1,14 +1,12 @@
 package com.aetna.movies.service;
 
-import com.aetna.movies.repository.MoviesRepository;
-import com.aetna.movies.dto.Movie;
-import com.aetna.movies.dto.Rating;
-import com.aetna.movies.entity.MovieEntity;
-import com.aetna.movies.exception.MoviesServiceException;
-import com.aetna.movies.mapper.EntityMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import lombok.extern.slf4j.Slf4j;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -17,12 +15,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.net.http.HttpResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.aetna.movies.dto.Movie;
+import com.aetna.movies.dto.Rating;
+import com.aetna.movies.entity.MovieEntity;
+import com.aetna.movies.exception.MoviesServiceException;
+import com.aetna.movies.mapper.EntityMapper;
+import com.aetna.movies.repository.MoviesRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -51,13 +53,21 @@ public class MoviesServiceImpl implements MoviesService {
                     .map(EntityMapper::toDto)
                     .toList();
 
-            List<Rating> ratings = getMovieRatings(moviesPage.stream().mapToInt(MovieEntity::getMovieId).toArray());
+            if (!movies.isEmpty()) {
+                try {
+                    List<Rating> ratings = getMovieRatings(moviesPage.stream().mapToInt(MovieEntity::getMovieId).toArray());
 
-            if (!ratings.isEmpty()) {
-                for (Movie movie : movies) {
-                    ratings.stream()
-                            .filter(rating -> rating.getMovieId() == movie.getMovieId())
-                            .findFirst().ifPresent(dto -> movie.setMovieRating(dto.getRating()));
+                    if (!ratings.isEmpty()) {
+                        for (Movie movie : movies) {
+                            ratings.stream()
+                                    .filter(rating -> rating.getMovieId() == movie.getMovieId())
+                                    .findFirst().ifPresent(dto -> movie.setMovieRating(dto.getRating()));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching ratings: {}", e.getMessage());
+                    // Set default rating to 0.0 for all movies when rating service fails
+                    movies.forEach(movie -> movie.setMovieRating(0.0));
                 }
             }
 
@@ -88,17 +98,45 @@ public class MoviesServiceImpl implements MoviesService {
     @Override
     public List<Movie> getAllMoviesByGenre(String genre, int page, int size) {
         try {
+            if (genre == null || genre.trim().isEmpty()) {
+                throw new IllegalArgumentException("Genre cannot be null or empty");
+            }
+            
             log.info("Requesting movies for genre {}", genre);
             Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, "title");
-            Page<MovieEntity> moviesPage = moviesRepository.getMoviesByGenre("%" + genre + "%", pageable);
-            log.info("Movies {} of genre {}", moviesPage.getNumberOfElements(), genre);
+            Page<MovieEntity> moviesPage = moviesRepository.getMoviesByGenre(genre.trim(), pageable);
+            log.info("Found {} movies of genre {}", moviesPage.getNumberOfElements(), genre);
+            
             List<Movie> movies = moviesPage.stream()
                     .map(EntityMapper::toDto)
                     .collect(Collectors.toList());
 
+            if (!movies.isEmpty()) {
+                try {
+                    List<Rating> ratings = getMovieRatings(moviesPage.stream()
+                            .mapToInt(MovieEntity::getMovieId)
+                            .toArray());
+
+                    if (!ratings.isEmpty()) {
+                        for (Movie movie : movies) {
+                            ratings.stream()
+                                    .filter(rating -> rating.getMovieId() == movie.getMovieId())
+                                    .findFirst()
+                                    .ifPresent(dto -> movie.setMovieRating(dto.getRating()));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching ratings: {}", e.getMessage());
+                    // Set default rating to 0.0 for all movies when rating service fails
+                    movies.forEach(movie -> movie.setMovieRating(0.0));
+                }
+            }
+
             return movies;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            throw new MoviesServiceException("Exception occurred while fetching movies", e);
+            throw new MoviesServiceException("Exception occurred while fetching movies by genre: " + genre, e);
         }
     }
 
@@ -112,10 +150,15 @@ public class MoviesServiceImpl implements MoviesService {
 
             if (movieEntity.isPresent()) {
                 Movie movie = EntityMapper.toDto(movieEntity.get());
-                int[] movieArr = { movieId };
-                List<Rating> ratings = getMovieRatings(movieArr);
-                if (!ratings.isEmpty()) {
-                    movie.setMovieRating(ratings.get(0).getRating());
+                try {
+                    int[] movieArr = { movieId };
+                    List<Rating> ratings = getMovieRatings(movieArr);
+                    if (!ratings.isEmpty()) {
+                        movie.setMovieRating(ratings.get(0).getRating());
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching ratings for movie {}: {}", movieId, e.getMessage());
+                    movie.setMovieRating(0.0);
                 }
                 return movie;
             }
@@ -125,7 +168,6 @@ public class MoviesServiceImpl implements MoviesService {
         }
 
         return null;
-
     }
 
     private List<Rating> getMovieRatings(int[] movieIds) {
