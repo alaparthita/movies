@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.1
 info:
   title: Movies API
   description: |
@@ -24,19 +24,19 @@ paths:
       description: |
         Retrieves a paginated list of all movies, sorted by release date in descending order.
         Returns 404 if no movies are found.
-        The page parameter is 0-based indexing.
+        The page parameter is 1-based indexing.
       operationId: getAllMovies
       parameters:
       - name: page
         in: query
-        description: Page number (0-based indexing)
+        description: Page number (1-based indexing)
         required: false
         schema:
           type: integer
           format: int32
-          minimum: 0
-          default: 0
-        example: 0
+          minimum: 1
+          default: 1
+        example: 1
       - name: size
         in: query
         description: Number of items per page (minimum 1)
@@ -65,14 +65,6 @@ paths:
                   rating: 9.3
                   runtime: 142
                   plot: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency."
-                - movieId: 2
-                  title: "The Godfather"
-                  releaseDate: "1972-03-24"
-                  genre: ["Crime", "Drama"]
-                  director: "Francis Ford Coppola"
-                  rating: 9.2
-                  runtime: 175
-                  plot: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son."
         "400":
           description: Invalid pagination parameters
           content:
@@ -119,10 +111,8 @@ paths:
         description: ID of the movie to retrieve (must be a positive integer)
         required: true
         schema:
-          type: integer
-          format: int32
-          minimum: 1
-        example: 1
+          type: string
+        example: "1"
       responses:
         "200":
           description: Successfully retrieved movie
@@ -193,11 +183,8 @@ paths:
         description: Year of release (must be between 1900 and 2100)
         required: true
         schema:
-          type: integer
-          format: int32
-          minimum: 1900
-          maximum: 2100
-        example: 2022
+          type: string
+        example: "2022"
       - name: page
         in: query
         description: Page number (0-based indexing)
@@ -216,8 +203,8 @@ paths:
           type: integer
           format: int32
           minimum: 1
-          default: 50
-        example: 50
+          default: 10
+        example: 10
       responses:
         "200":
           description: Successfully retrieved movies for the specified year
@@ -235,15 +222,6 @@ paths:
                   director: "Joseph Kosinski"
                   rating: 8.3
                   runtime: 130
-                  plot: "After more than 30 years of service as one of the Navy's top aviators, Pete 'Maverick' Mitchell is where he belongs."
-                - movieId: 2
-                  title: "The Batman"
-                  releaseDate: "2022-03-04"
-                  genre: ["Action", "Crime", "Drama"]
-                  director: "Matt Reeves"
-                  rating: 7.9
-                  runtime: 176
-                  plot: "When a sadistic serial killer begins murdering key political figures in Gotham, Batman is forced to investigate the city's hidden corruption."
         "400":
           description: Invalid year format or pagination parameters
           content:
@@ -251,16 +229,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorDetails"
               examples:
+                invalidFormat:
+                  value:
+                    statusCode: 400
+                    message: "Invalid year format: abc"
+                    details: "uri=/api/v1/movies/year/abc"
                 invalidYear:
                   value:
                     statusCode: 400
-                    message: "Failed to convert value 'abc' to required type 'Integer'"
-                    details: "uri=/api/v1/movies/year/abc"
-                outOfRange:
+                    message: "Year must be between 1900 and 2100"
+                    details: "uri=/api/v1/movies/year/2200"
+                invalidPagination:
                   value:
                     statusCode: 400
-                    message: "Year must be between 1900 and 2100"
-                    details: "uri=/api/v1/movies/year/1899"
+                    message: "Invalid pagination parameters: page must be >= 0 and size must be > 0"
+                    details: "uri=/api/v1/movies/year/2022"
         "404":
           description: No movies found for the specified year
           content:
@@ -290,27 +273,25 @@ paths:
         Retrieves a paginated list of movies that match the specified genre.
         The genre parameter is case-sensitive.
         Returns 404 if no movies are found for the given genre.
-        Results are sorted by release date in descending order.
       operationId: getMoviesByGenre
       parameters:
       - name: genre
         in: path
-        description: Genre to filter by (case-sensitive, e.g., Action, Drama, Comedy)
+        description: Genre to filter by
         required: true
         schema:
           type: string
-          minLength: 1
         example: "Action"
       - name: page
         in: query
-        description: Page number (0-based indexing)
+        description: Page number (1-based indexing)
         required: false
         schema:
           type: integer
           format: int32
-          minimum: 0
-          default: 0
-        example: 0
+          minimum: 1
+          default: 1
+        example: 1
       - name: size
         in: query
         description: Number of items per page (minimum 1)
@@ -338,25 +319,23 @@ paths:
                   director: "Christopher Nolan"
                   rating: 9.0
                   runtime: 152
-                  plot: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice."
-                - movieId: 2
-                  title: "Mad Max: Fury Road"
-                  releaseDate: "2015-05-15"
-                  genre: ["Action", "Adventure", "Sci-Fi"]
-                  director: "George Miller"
-                  rating: 8.6
-                  runtime: 120
-                  plot: "In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland with the aid of a group of female prisoners, a psychotic worshiper, and a drifter named Max."
         "400":
           description: Invalid genre parameter or pagination parameters
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorDetails"
-              example:
-                statusCode: 400
-                message: "Genre parameter cannot be null or empty"
-                details: "uri=/api/v1/movies/genre/"
+              examples:
+                emptyGenre:
+                  value:
+                    statusCode: 400
+                    message: "Genre parameter cannot be null or empty"
+                    details: "uri=/api/v1/movies/genre/"
+                invalidPagination:
+                  value:
+                    statusCode: 400
+                    message: "Invalid pagination parameters: page must be >= 0 and size must be > 0"
+                    details: "uri=/api/v1/movies/genre/Action"
         "404":
           description: No movies found for the specified genre
           content:
@@ -381,7 +360,7 @@ components:
   schemas:
     Movie:
       type: object
-      description: Detailed information about a movie
+      description: Detailed movie information
       properties:
         movieId:
           type: integer
@@ -391,21 +370,18 @@ components:
         title:
           type: string
           description: The title of the movie
-          minLength: 1
         releaseDate:
           type: string
           format: date
-          description: The release date of the movie in ISO 8601 format (YYYY-MM-DD)
+          description: The release date of the movie (YYYY-MM-DD)
         genre:
           type: array
-          description: List of genres the movie belongs to
+          description: List of genres for the movie
           items:
             type: string
-            minLength: 1
         director:
           type: string
           description: The director of the movie
-          minLength: 1
         rating:
           type: number
           format: double
@@ -416,20 +392,14 @@ components:
           type: integer
           format: int32
           description: The runtime of the movie in minutes
-          minimum: 1
-        plot:
-          type: string
-          description: A brief description of the movie's plot
-          minLength: 1
+          minimum: 0
       required:
         - movieId
         - title
         - releaseDate
         - genre
         - director
-        - rating
         - runtime
-        - plot
     ErrorDetails:
       type: object
       description: Standard error response format for all API errors
@@ -448,77 +418,3 @@ components:
         - statusCode
         - message
         - details
-
-          description: Unique identifier for the movie
-          example: 1
-        imdbId:
-          type: string
-          description: IMDB identifier for the movie
-          example: "tt0111161"
-        title:
-          type: string
-          description: Title of the movie
-          example: "The Shawshank Redemption"
-        overview:
-          type: string
-          description: Brief summary of the movie plot
-          example: "Two imprisoned men bond over a number of years..."
-        productionCompanies:
-          type: string
-          description: JSON array of production company information
-          example: "[{\"name\": \"Castle Rock Entertainment\"}]"
-        releaseDate:
-          type: string
-          description: Release date of the movie (YYYY-MM-DD)
-          example: "1994-09-23"
-        movieRating:
-          type: number
-          format: double
-          description: Average rating of the movie (0-10)
-          minimum: 0
-          maximum: 10
-          example: 9.3
-        budget:
-          type: string
-          description: Movie budget in USD
-          example: "25000000"
-        revenue:
-          type: number
-          format: double
-          description: Movie revenue in USD
-          example: 58800000
-        runtime:
-          type: number
-          format: double
-          description: Movie runtime in minutes
-          minimum: 0
-          example: 142
-        language:
-          type: string
-          description: Primary language of the movie
-          example: "en"
-        genres:
-          type: array
-          description: List of genres associated with the movie
-          items:
-            type: string
-          example: ["Drama"]
-    ErrorDetails:
-      type: object
-      required:
-        - statusCode
-        - message
-      properties:
-        statusCode:
-          type: integer
-          format: int32
-          description: HTTP status code
-          example: 404
-        message:
-          type: string
-          description: Error message
-          example: "Resource not found"
-        details:
-          type: string
-          description: Additional error details
-          example: "id: 123"

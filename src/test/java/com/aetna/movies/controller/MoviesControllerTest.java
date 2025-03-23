@@ -227,7 +227,7 @@ class MoviesControllerTest {
                         .param("size", "50")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Failed to convert value of type 'java.lang.String' to required type 'int'"));
+                .andExpect(jsonPath("$.message").value("Invalid year format: invalid"));
     }
 
     @Test
