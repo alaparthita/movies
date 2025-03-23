@@ -1,8 +1,20 @@
 package com.aetna.movies.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.aetna.movies.dto.Movie;
 import com.aetna.movies.exception.ResourceNotFoundException;
 import com.aetna.movies.service.MoviesService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,12 +23,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/movies")
@@ -31,6 +37,12 @@ public class MoviesController {
         this.moviesService = moviesService;
     }
 
+    private void validatePaginationParams(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Invalid pagination parameters: page must be >= 0 and size must be > 0");
+        }
+    }
+
     @Operation(summary = "Get all movies", description = "Retrieve a paginated list of all movies")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved movies",
@@ -43,6 +55,7 @@ public class MoviesController {
             @Parameter(description = "Page number", example = "1") @RequestParam(value = "page", defaultValue = "1") int page,
             @Parameter(description = "Page size", example = "50") @RequestParam(value = "size", defaultValue = "50") int size) {
 
+        validatePaginationParams(page, size);
         List<Movie> movies = moviesService.getAllMovies(page, size);
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found");
@@ -81,6 +94,7 @@ public class MoviesController {
             @Parameter(description = "Page number", example = "1") @RequestParam(value = "page", defaultValue = "1") int page,
             @Parameter(description = "Page size", example = "50") @RequestParam(value = "size", defaultValue = "50") int size) {
 
+        validatePaginationParams(page, size);
         List<Movie> movies = moviesService.getAllMoviesByYear(year, page, size);
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found");
@@ -101,6 +115,7 @@ public class MoviesController {
             @Parameter(description = "Page number", example = "1") @RequestParam(value = "page", defaultValue = "1") int page,
             @Parameter(description = "Page size", example = "50") @RequestParam(value = "size", defaultValue = "50") int size) {
 
+        validatePaginationParams(page, size);
         List<Movie> movies = moviesService.getAllMoviesByGenre(genre, page, size);
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found");
