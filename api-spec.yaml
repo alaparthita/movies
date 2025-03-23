@@ -1,186 +1,41 @@
 openapi: 3.1.0
 info:
-  title: OpenAPI definition
-  version: v0
+  title: Movies API
+  description: API for managing and retrieving movie information
+  version: 1.0.0
 servers:
 - url: http://localhost:8080
-  description: Generated server url
+  description: Local development server
 tags:
 - name: Movies
-  description: API for managing movies
+  description: API for managing movies and retrieving movie information
 paths:
-  /api/v1/movies/{movieId}:
-    get:
-      tags:
-      - Movies
-      summary: Get movie details
-      description: Retrieve details of a specific movie by its ID
-      operationId: getMovieDetails
-      parameters:
-      - name: movieId
-        in: path
-        description: ID of the movie
-        required: true
-        schema:
-          type: integer
-          format: int32
-        example: 123
-      responses:
-        "200":
-          description: Successfully retrieved movie details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Movie"
-        "404":
-          description: Movie not found
-          content:
-            '*/*':
-              schema:
-                type: object
-        "500":
-          description: Internal server error
-          content:
-            '*/*':
-              schema:
-                type: object
-  /api/v1/movies/year/{year}:
-    get:
-      tags:
-      - Movies
-      summary: Get movies by year
-      description: Retrieve a paginated list of movies released in a specific year
-      operationId: getMoviesByYear
-      parameters:
-      - name: year
-        in: path
-        description: Year of release
-        required: true
-        schema:
-          type: integer
-          format: int32
-        example: 2022
-      - name: page
-        in: query
-        description: Page number
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 1
-        example: 1
-      - name: size
-        in: query
-        description: Page size
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 50
-        example: 50
-      responses:
-        "200":
-          description: Successfully retrieved movies
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Movie"
-        "404":
-          description: No movies found
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
-        "500":
-          description: Internal server error
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
-  /api/v1/movies/genre/{genre}:
-    get:
-      tags:
-      - Movies
-      summary: Get movies by genre
-      description: Retrieve a paginated list of movies by genre
-      operationId: getAllMoviesByGenre
-      parameters:
-      - name: genre
-        in: path
-        description: Genre of the movies
-        required: true
-        schema:
-          type: string
-        example: Action
-      - name: page
-        in: query
-        description: Page number
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 1
-        example: 1
-      - name: size
-        in: query
-        description: Page size
-        required: false
-        schema:
-          type: integer
-          format: int32
-          default: 50
-        example: 50
-      responses:
-        "200":
-          description: Successfully retrieved movies
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Movie"
-        "404":
-          description: No movies found
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
-        "500":
-          description: Internal server error
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
   /api/v1/movies/:
     get:
       tags:
       - Movies
       summary: Get all movies
-      description: Retrieve a paginated list of all movies
+      description: Retrieves a paginated list of all movies. Returns 404 if no movies are found.
       operationId: getAllMovies
       parameters:
       - name: page
         in: query
-        description: Page number
+        description: Page number (1-based indexing)
         required: false
         schema:
           type: integer
           format: int32
+          minimum: 1
           default: 1
         example: 1
       - name: size
         in: query
-        description: Page size
+        description: Number of items per page (minimum 1)
         required: false
         schema:
           type: integer
           format: int32
+          minimum: 1
           default: 50
         example: 50
       responses:
@@ -189,55 +44,341 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Movie"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+              example:
+                - movieId: 1
+                  title: "The Shawshank Redemption"
+                  releaseDate: "1994-09-23"
+                  movieRating: 9.3
+                  genres: ["Drama"]
+        "400":
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 400
+                message: "Invalid pagination parameters: page must be >= 0 and size must be > 0"
+                details: "page: -1, size: 0"
         "404":
           description: No movies found
           content:
-            '*/*':
+            application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 404
+                message: "No movies found"
+                details: "Empty result set"
         "500":
           description: Internal server error
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 500
+                message: "An error occurred while retrieving movies"
+                details: "Database error"
+  /api/v1/movies/{id}:
+    get:
+      tags:
+      - Movies
+      summary: Get movie by ID
+      description: Retrieves a specific movie by its ID. Returns 404 if the movie is not found.
+      operationId: getMovieById
+      parameters:
+      - name: id
+        in: path
+        description: ID of the movie to retrieve
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+        example: 1
+      responses:
+        "200":
+          description: Successfully retrieved movie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+              example:
+                movieId: 1
+                title: "The Shawshank Redemption"
+                releaseDate: "1994-09-23"
+                movieRating: 9.3
+                genres: ["Drama"]
+        "404":
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 404
+                message: "Movie not found with id: 1"
+                details: "id: 1"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 500
+                message: "An error occurred while retrieving the movie"
+                details: "Database error"
+  /api/v1/movies/year/{year}:
+    get:
+      tags:
+      - Movies
+      summary: Get movies by year
+      description: Retrieves a paginated list of movies released in a specific year. Returns 404 if no movies are found.
+      operationId: getMoviesByYear
+      parameters:
+      - name: year
+        in: path
+        description: Year of release (e.g., 2022)
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1900
+          maximum: 2100
+        example: 2022
+      - name: page
+        in: query
+        description: Page number (1-based indexing)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+        example: 1
+      - name: size
+        in: query
+        description: Number of items per page (minimum 1)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 50
+        example: 50
+      responses:
+        "200":
+          description: Successfully retrieved movies
+          content:
+            application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Movie"
+              example:
+                - movieId: 1
+                  title: "Top Gun: Maverick"
+                  releaseDate: "2022-05-27"
+                  movieRating: 8.3
+                  genres: ["Action", "Drama"]
+        "400":
+          description: Invalid pagination parameters or year format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 400
+                message: "Invalid pagination parameters: page must be >= 0 and size must be > 0"
+                details: "page: -1, size: 0"
+        "404":
+          description: No movies found for year
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 404
+                message: "No movies found for year: 2022"
+                details: "year: 2022"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 500
+                message: "An error occurred while retrieving movies by year"
+                details: "Database error"
+  /api/v1/movies/genre/{genre}:
+    get:
+      tags:
+      - Movies
+      summary: Get movies by genre
+      description: Retrieves a paginated list of movies that match the specified genre. Returns 404 if no movies are found.
+      operationId: getMoviesByGenre
+      parameters:
+      - name: genre
+        in: path
+        description: Genre to filter by (e.g., Action, Drama, Comedy)
+        required: true
+        schema:
+          type: string
+          minLength: 1
+        example: "Action"
+      - name: page
+        in: query
+        description: Page number (1-based indexing)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+        example: 1
+      - name: size
+        in: query
+        description: Number of items per page (minimum 1)
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 50
+        example: 50
+      responses:
+        "200":
+          description: Successfully retrieved movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+              example:
+                - movieId: 1
+                  title: "The Dark Knight"
+                  releaseDate: "2008-07-18"
+                  movieRating: 9.0
+                  genres: ["Action", "Crime", "Drama"]
+        "400":
+          description: Invalid pagination parameters or genre format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 400
+                message: "Genre parameter cannot be null or empty"
+                details: "genre: null"
+        "404":
+          description: No movies found for genre
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 404
+                message: "No movies found for genre: Action"
+                details: "genre: Action"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+              example:
+                statusCode: 500
+                message: "An error occurred while retrieving movies by genre"
+                details: "Database error"
 components:
   schemas:
     Movie:
       type: object
+      required:
+        - movieId
+        - title
+        - releaseDate
       properties:
         movieId:
           type: integer
           format: int32
+          description: Unique identifier for the movie
+          example: 1
         imdbId:
           type: string
+          description: IMDB identifier for the movie
+          example: "tt0111161"
         title:
           type: string
+          description: Title of the movie
+          example: "The Shawshank Redemption"
         overview:
           type: string
+          description: Brief summary of the movie plot
+          example: "Two imprisoned men bond over a number of years..."
         productionCompanies:
           type: string
+          description: JSON array of production company information
+          example: "[{\"name\": \"Castle Rock Entertainment\"}]"
         releaseDate:
           type: string
+          description: Release date of the movie (YYYY-MM-DD)
+          example: "1994-09-23"
         movieRating:
           type: number
           format: double
+          description: Average rating of the movie (0-10)
+          minimum: 0
+          maximum: 10
+          example: 9.3
         budget:
           type: string
+          description: Movie budget in USD
+          example: "25000000"
         revenue:
           type: number
           format: double
+          description: Movie revenue in USD
+          example: 58800000
         runtime:
           type: number
           format: double
+          description: Movie runtime in minutes
+          minimum: 0
+          example: 142
         language:
           type: string
+          description: Primary language of the movie
+          example: "en"
         genres:
           type: array
+          description: List of genres associated with the movie
           items:
             type: string
+          example: ["Drama"]
+    ErrorDetails:
+      type: object
+      required:
+        - statusCode
+        - message
+      properties:
+        statusCode:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 404
+        message:
+          type: string
+          description: Error message
+          example: "Resource not found"
+        details:
+          type: string
+          description: Additional error details
+          example: "id: 123"

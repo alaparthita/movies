@@ -172,10 +172,16 @@ class MoviesServiceImplTest {
     }
 
     @Test
-    void testGetAllMoviesByGenre_Success() {
+    void testGetAllMoviesByGenre_Success() throws Exception {
         // Arrange
+        MovieEntity movieEntity = new MovieEntity();
+        movieEntity.setMovieId(1);
+        movieEntity.setTitle("Test Movie");
+        movieEntity.setGenres("[{\"id\": 28, \"name\": \"Action\"}]");
+        
         Page<MovieEntity> moviePage = new PageImpl<>(Collections.singletonList(movieEntity));
-        when(moviesRepository.getMoviesByGenre(eq("%Action%"), any(Pageable.class))).thenReturn(moviePage);
+        when(moviesRepository.getMoviesByGenre(eq("Action"), any(Pageable.class))).thenReturn(moviePage);
+        when(restClientService.post(anyString(), anyString())).thenReturn(httpResponse);
 
         // Act
         List<Movie> movies = moviesService.getAllMoviesByGenre("Action", 0, 10);
@@ -184,14 +190,15 @@ class MoviesServiceImplTest {
         assertNotNull(movies);
         assertEquals(1, movies.size());
         assertEquals("Test Movie", movies.get(0).getTitle());
-        verify(moviesRepository, times(1)).getMoviesByGenre(eq("%Action%"), any(Pageable.class));
+        assertEquals(4.5, movies.get(0).getMovieRating());
+        verify(moviesRepository, times(1)).getMoviesByGenre(eq("Action"), any(Pageable.class));
     }
 
     @Test
     void testGetAllMoviesByGenre_EmptyResult() {
         // Arrange
         Page<MovieEntity> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(moviesRepository.getMoviesByGenre(eq("%Action%"), any(Pageable.class))).thenReturn(emptyPage);
+        when(moviesRepository.getMoviesByGenre(eq("Action"), any(Pageable.class))).thenReturn(emptyPage);
 
         // Act
         List<Movie> movies = moviesService.getAllMoviesByGenre("Action", 0, 10);
@@ -202,23 +209,50 @@ class MoviesServiceImplTest {
     }
 
     @Test
+    void testGetAllMoviesByGenre_NullGenre() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> moviesService.getAllMoviesByGenre(null, 0, 10));
+    }
+
+    @Test
     void testGetAllMoviesByGenre_EmptyGenre() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> moviesService.getAllMoviesByGenre("", 0, 10));
+    }
+
+    @Test
+    void testGetAllMoviesByGenre_WhitespaceGenre() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> moviesService.getAllMoviesByGenre("   ", 0, 10));
+    }
+
+    @Test
+    void testGetAllMoviesByGenre_RatingServiceFailure() throws Exception {
         // Arrange
-        Page<MovieEntity> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(moviesRepository.getMoviesByGenre(eq("%%"), any(Pageable.class))).thenReturn(emptyPage);
+        MovieEntity movieEntity = new MovieEntity();
+        movieEntity.setMovieId(1);
+        movieEntity.setTitle("Test Movie");
+        movieEntity.setGenres("[{\"id\": 28, \"name\": \"Action\"}]");
+        
+        Page<MovieEntity> moviePage = new PageImpl<>(Collections.singletonList(movieEntity));
+        when(moviesRepository.getMoviesByGenre(eq("Action"), any(Pageable.class))).thenReturn(moviePage);
+        
+        when(httpResponse.statusCode()).thenReturn(500);
+        when(restClientService.post(anyString(), anyString())).thenReturn(httpResponse);
 
         // Act
-        List<Movie> movies = moviesService.getAllMoviesByGenre("", 0, 10);
+        List<Movie> movies = moviesService.getAllMoviesByGenre("Action", 0, 10);
 
         // Assert
         assertNotNull(movies);
-        assertTrue(movies.isEmpty());
+        assertEquals(1, movies.size());
+        assertEquals(0.0, movies.get(0).getMovieRating());
     }
 
     @Test
     void testGetAllMoviesByGenre_RepositoryException() {
         // Arrange
-        when(moviesRepository.getMoviesByGenre(eq("%Action%"), any(Pageable.class)))
+        when(moviesRepository.getMoviesByGenre(eq("Action"), any(Pageable.class)))
             .thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert

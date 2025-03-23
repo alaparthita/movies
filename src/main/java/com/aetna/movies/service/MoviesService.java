@@ -1,8 +1,8 @@
 package com.aetna.movies.service;
 
-import com.aetna.movies.dto.Movie;
-
 import java.util.List;
+
+import com.aetna.movies.dto.Movie;
 
 public interface MoviesService {
 

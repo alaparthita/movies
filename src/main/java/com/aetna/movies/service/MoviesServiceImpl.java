@@ -98,17 +98,45 @@ public class MoviesServiceImpl implements MoviesService {
     @Override
     public List<Movie> getAllMoviesByGenre(String genre, int page, int size) {
         try {
+            if (genre == null || genre.trim().isEmpty()) {
+                throw new IllegalArgumentException("Genre cannot be null or empty");
+            }
+            
             log.info("Requesting movies for genre {}", genre);
             Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, "title");
-            Page<MovieEntity> moviesPage = moviesRepository.getMoviesByGenre("%" + genre + "%", pageable);
-            log.info("Movies {} of genre {}", moviesPage.getNumberOfElements(), genre);
+            Page<MovieEntity> moviesPage = moviesRepository.getMoviesByGenre(genre.trim(), pageable);
+            log.info("Found {} movies of genre {}", moviesPage.getNumberOfElements(), genre);
+            
             List<Movie> movies = moviesPage.stream()
                     .map(EntityMapper::toDto)
                     .collect(Collectors.toList());
 
+            if (!movies.isEmpty()) {
+                try {
+                    List<Rating> ratings = getMovieRatings(moviesPage.stream()
+                            .mapToInt(MovieEntity::getMovieId)
+                            .toArray());
+
+                    if (!ratings.isEmpty()) {
+                        for (Movie movie : movies) {
+                            ratings.stream()
+                                    .filter(rating -> rating.getMovieId() == movie.getMovieId())
+                                    .findFirst()
+                                    .ifPresent(dto -> movie.setMovieRating(dto.getRating()));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching ratings: {}", e.getMessage());
+                    // Set default rating to 0.0 for all movies when rating service fails
+                    movies.forEach(movie -> movie.setMovieRating(0.0));
+                }
+            }
+
             return movies;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            throw new MoviesServiceException("Exception occurred while fetching movies", e);
+            throw new MoviesServiceException("Exception occurred while fetching movies by genre: " + genre, e);
         }
     }
 
