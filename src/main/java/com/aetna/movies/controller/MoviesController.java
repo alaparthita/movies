@@ -63,10 +63,10 @@ public class MoviesController {
             }
             log.debug("Getting movie with ID {} and clientRefId: {}", id, ClientRefIdHolder.getClientRefId());
             Movie movie = moviesService.getMovieDetails(id);
-            log.debug("Retrieved movie {} with clientRefId: {}", movie.getTitle(), ClientRefIdHolder.getClientRefId());
             if (movie == null) {
                 throw new ResourceNotFoundException("Movie not found with id: " + id);
             }
+            log.debug("Retrieved movie {} with clientRefId: {}", movie.getTitle(), ClientRefIdHolder.getClientRefId());
             return ResponseEntity.ok(movie);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid ID format: " + idStr);

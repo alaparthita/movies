@@ -100,11 +100,6 @@ OpenTelemetry integration is available for distributed tracing. Enable it using 
 - JaCoCo for code coverage reporting
 - Unit tests for core functionality
 
-To run code quality checks:
-```bash
-./gradlew check
-```
-
 ## Docker Support
 
 Build the Docker image:
@@ -120,7 +115,7 @@ docker-compose up
 ## Future Improvements
 
 1. Enhanced genre search through:
-   - Virtual columns
+   - Distributed caching
    - JSON field indexing
    - Full-text search capabilities
 
@@ -128,7 +123,3 @@ docker-compose up
    - Authentication/Authorization
    - Rate limiting
    - Request routing
-
-3. Additional test coverage:
-   - Performance tests
-   - API contract tests
