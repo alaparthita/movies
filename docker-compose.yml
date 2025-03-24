@@ -1,21 +1,21 @@
-
 services:
   movies:
-    image: movies # Replace with the image name you built for your Spring Boot app
+    image: movies
     build: .
     ports:
       - "8080:8080"
     volumes:
-      - .\src\main\resources:/data/db  # Mount the database file from your host system
+      - ./src/main/resources:/data/db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/db/movies.db  # Location of SQLite DB inside the container
+      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/db/movies.db
+      - RATINGS_SERVICE_URL=http://ratings:8081
     networks:
-      - mynetwork
+      - app-network
 
 volumes:
   db:
     driver: local
 
 networks:
-  mynetwork: 
-    external: true
+  app-network:
+    name: app-network
